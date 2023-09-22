@@ -38,10 +38,14 @@
             <label for="exampleInputEmail1" class="form-label">Lista de códigos</label>
             <textarea class="form-control" id="data" rows="5" cols="30" height="100px"></textarea>
             <small>Separe os códigos de cada qr code por ponto e vírgula (;)</small>
-            <small id="info" style="display: none;"></small>
+            <br>
+            <small id="info"></small>
+            <br>
+            <small id="infoZip"></small>
         </div>
         <div class="text-center my-3">
-            <button onclick="makeCodePartitioned()">Gerar qrcode</button>
+            <button onclick="makeCodePartitionedB()">Gerar qrcode</button>
+            <!-- <button onclick="makeCodePartitioned()">Gerar qrcode</button> -->
         </div>
         <div id="htmlContent" class="position-relative d-flex justify-content-center align-items-center">
             <div id="qrcode" class="position-absolute z-3 qrcode-elem"></div>
@@ -53,85 +57,17 @@
         <canvas id="canvas"></canvas>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
         <script>      
-            async function makeCodePartitioned() {
-                const info =  document.getElementById("data");
+
+            async function makeCodePartitionedB() {
+                const info =  document.getElementById("info");
+                const infoZip =  document.getElementById("infoZip");
                 const elText = document.getElementById("data");
                 const codeElemen = document.getElementById("code");
                 const qrCodeElemen = document.getElementById("qrcode");
-                const codesList = elText.value.split(";");
-                const zip = new JSZip();
+                const list = elText.value.split(";");
+                const codesList = [... new Set(list)];
 
-                if (!elText.value) {
-                    alert("Input a text");
-                    elText.focus();
-                    return;
-                }
-
-                for (let i = 0; i < codesList.length; i++) {
-                    const c = codesList[i];
-                    const filename = codeFormat(c)
-                    // Chame codeFormat antes de fazer o QRCode e desenhar no canvas
-                    codeElemen.innerHTML = filename;
-
-                    // Crie o QRCode
-                    const qrcode = new QRCode(qrCodeElemen, {
-                        width: 450,
-                        height: 450,
-                    });
-                    qrcode.makeCode(c);
-
-                    const htmlContent = document.getElementById('htmlContent');
-                    const canvas = document.getElementById('canvas');
-                    const context = canvas.getContext('2d');
-
-                    const htmlContentWidth = htmlContent.offsetWidth;
-                    const htmlContentHeight = htmlContent.offsetHeight;
-
-                    canvas.width = htmlContentWidth;
-                    canvas.height = htmlContentHeight;
-
-                    // Limpa o canvas antes de desenhar
-                    context.clearRect(0, 0, canvas.width, canvas.height);
-
-                    // Desenha o conteúdo HTML no canvas
-                    await html2canvas(htmlContent, { scale: 0.7 }).then(function (canvas) {
-                        // Adiciona o canvas gerado ao ZIP
-                        return new Promise((resolve) => {
-                            canvas.toBlob(function (blob) {
-                                const filename = `image_${i + 1}.png`
-                                zip.file(filename, blob);
-                                    const images = qrCodeElemen.getElementsByTagName('img');
-                                    for (let i = 0; i < images.length; i++) {
-                                        const img = images[i];
-                                        img.remove();
-                                    }
-                                resolve(); // Resolve a promessa após terminar a operação com o blob
-                            });
-                        });
-                    });
-                }
-
-                // Gere o ZIP e faça o download
-                zip.generateAsync({ type: 'blob' })
-                    .then(function (content) {
-                        // Cria um link para fazer o download do ZIP
-                        const link = document.createElement('a');
-                        link.href = URL.createObjectURL(content);
-                        link.download = 'images.zip';
-                        link.click();
-                    })
-                    .catch(function (error) {
-                        console.error('Erro ao gerar o ZIP: ', error);
-                    });
-            }
-
-            async function makeCodePartitioned() {
-                const info =  document.getElementById("data");
-                const elText = document.getElementById("data");
-                const codeElemen = document.getElementById("code");
-                const qrCodeElemen = document.getElementById("qrcode");
-                const codesList = elText.value.split(";");
-                const zip = new JSZip();
+                const totalList = codesList.length
                 
                 if (!elText.value) {
                     alert("Input a text");
@@ -139,36 +75,36 @@
                     return;
                 }
             
-                const maxIterations = 200;
+                const maxIterations = 20;
                 const numIterations = Math.ceil(codesList.length / maxIterations);
                 info.style.display = "block";
-            
-                for (let j = 0; j < numIterations; j++) {
-                    for (let i = j * maxIterations; i < Math.min((j + 1) * maxIterations, codesList.length); i++) {
-                        const c = codesList[i];
+
+                for(let i = 0; i < numIterations ; i++){
+                    const zip = new JSZip();
+
+
+                    const arrayToDownload = codesList.slice(0,maxIterations)
+                    codesList.splice(0,maxIterations)
+                    for(let j = 0; j < arrayToDownload.length; j ++){
+
+                        const c = arrayToDownload[j];
                         const filename = codeFormat(c);
-            
-                        // Chame codeFormat antes de fazer o QRCode e desenhar no canvas
+
                         codeElemen.innerHTML = filename;
-            
-                        // Crie o QRCode
+
                         const qrcode = new QRCode(qrCodeElemen, {
                             width: 450,
                             height: 450,
                         });
                         qrcode.makeCode(c);
-            
+
                         const htmlContent = document.getElementById('htmlContent');
                         const canvas = document.getElementById('canvas');
                         const context = canvas.getContext('2d');
             
                         const htmlContentWidth = htmlContent.offsetWidth;
                         const htmlContentHeight = htmlContent.offsetHeight;
-            
-                        canvas.width = htmlContentWidth;
-                        canvas.height = htmlContentHeight;
-            
-                        // Limpa o canvas antes de desenhar
+
                         context.clearRect(0, 0, canvas.width, canvas.height);
             
                         // Desenha o conteúdo HTML no canvas
@@ -176,12 +112,12 @@
                             // Adiciona o canvas gerado ao ZIP
                             return new Promise((resolve) => {
                                 canvas.toBlob(function (blob) {
-                                    const filename = `image_${i + 1}.png`
-                                    zip.file(filename, blob);
+                                    const file = `${filename}.png`
+                                    zip.file(file, blob);
                                     const images = qrCodeElemen.getElementsByTagName('img');
-                                    info.innerHTML = `Convertendo ${i + 1} de ${codesList.length}`
-                                    for (let i = 0; i < images.length; i++) {
-                                        const img = images[i];
+                                    info.innerHTML = `Convertendo ${j + 1} de ${codesList.length} do total de ${totalList}`
+                                    for (let a = 0; a < images.length; a++) {
+                                        const img = images[a];
                                         img.remove();
                                     }
                                     resolve(); // Resolve a promessa após terminar a operação com o blob
@@ -189,22 +125,27 @@
                             });
                         });
                     }
-            
-                    // Gere o ZIP e faça o download a cada 200 iterações
-                    if (j === numIterations - 1 || (j + 1) % 200 === 0) {
+                    infoZip.innerHTML = `Gerando novo arquivo zip. Não atualize nem feche a página`
+                    new Promise((resolve) => {
                         zip.generateAsync({ type: 'blob' })
                             .then(function (content) {
                                 // Cria um link para fazer o download do ZIP
                                 const link = document.createElement('a');
                                 link.href = URL.createObjectURL(content);
-                                link.download = `images_${j + 1}.zip`;
+                                link.download = `images_${i + 1}.zip`;
                                 link.click();
+                                infoZip.innerHTML = `Baixado ${i + 1} de ${numIterations}`
                             })
                             .catch(function (error) {
                                 console.error('Erro ao gerar o ZIP: ', error);
                             });
-                    }
+                            resolve();
+                    })
+                    
                 }
+                infoZip.innerHTML = `Todos os arquivos zip gerados.`
+
+            
             }
             
 
