@@ -125,7 +125,7 @@
                             });
                         });
                     }
-                    infoZip.innerHTML = `Gerando novo arquivo zip. Não atualize nem feche a página`
+                    infoZip.innerHTML = `Gerando novo arquivo zip. Não atualize nem feche a página.`
                     new Promise((resolve) => {
                         zip.generateAsync({ type: 'blob' })
                             .then(function (content) {
@@ -134,7 +134,7 @@
                                 link.href = URL.createObjectURL(content);
                                 link.download = `images_${i + 1}.zip`;
                                 link.click();
-                                infoZip.innerHTML = `Baixado ${i + 1} de ${numIterations}`
+                                infoZip.innerHTML = `Baixado ${i + 1} de ${numIterations}. Não atualize nem feche a página.`
                             })
                             .catch(function (error) {
                                 console.error('Erro ao gerar o ZIP: ', error);
