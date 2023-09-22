@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script type="text/javascript" src="/assests/scripts/jquery.min.js"></script>
+	<script type="text/javascript" src="/assests/scripts/qrcode.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+</head>
+    <title>QR Code Generator</title>
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+
+        .qrcode-elem {
+            transform: translateX(-50%);
+            left: 50%;
+            bottom: 118px;
+            width:450px;
+            height:450px;
+        }
+
+        .code-elem {
+            transform: translateX(-50%);
+            left: 50%;
+            bottom: 40px;
+            font-size: 36px;
+            font-weight: 400;
+            color: #fff;
+        }
+    </style>
+</head>
+    <body>
+        <div class="mb-5 px-5">
+            <label for="exampleInputEmail1" class="form-label">Lista de códigos</label>
+            <textarea class="form-control" id="data" rows="5" cols="30" height="100px"></textarea>
+            <small>Separe os códigos de cada qr code por ponto e vírgula (;)</small>
+            <small id="info" style="display: none;"></small>
+        </div>
+        <div class="text-center my-3">
+            <button onclick="makeCodePartitioned()">Gerar qrcode</button>
+        </div>
+        <div id="htmlContent" class="position-relative d-flex justify-content-center align-items-center">
+            <div id="qrcode" class="position-absolute z-3 qrcode-elem"></div>
+            <div id="code" class="position-absolute z-3 code-elem"></div>
+            <img src="./assests//img/bg.png" alt="">
+        </div>
+
+        <div id="preview"></div>
+        <canvas id="canvas"></canvas>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+        <script>      
+            async function makeCodePartitioned() {
+                const info =  document.getElementById("data");
+                const elText = document.getElementById("data");
+                const codeElemen = document.getElementById("code");
+                const qrCodeElemen = document.getElementById("qrcode");
+                const codesList = elText.value.split(";");
+                const zip = new JSZip();
+
+                if (!elText.value) {
+                    alert("Input a text");
+                    elText.focus();
+                    return;
+                }
+
+                for (let i = 0; i < codesList.length; i++) {
+                    const c = codesList[i];
+                    const filename = codeFormat(c)
+                    // Chame codeFormat antes de fazer o QRCode e desenhar no canvas
+                    codeElemen.innerHTML = filename;
+
+                    // Crie o QRCode
+                    const qrcode = new QRCode(qrCodeElemen, {
+                        width: 450,
+                        height: 450,
+                    });
+                    qrcode.makeCode(c);
+
+                    const htmlContent = document.getElementById('htmlContent');
+                    const canvas = document.getElementById('canvas');
+                    const context = canvas.getContext('2d');
+
+                    const htmlContentWidth = htmlContent.offsetWidth;
+                    const htmlContentHeight = htmlContent.offsetHeight;
+
+                    canvas.width = htmlContentWidth;
+                    canvas.height = htmlContentHeight;
+
+                    // Limpa o canvas antes de desenhar
+                    context.clearRect(0, 0, canvas.width, canvas.height);
+
+                    // Desenha o conteúdo HTML no canvas
+                    await html2canvas(htmlContent, { scale: 0.7 }).then(function (canvas) {
+                        // Adiciona o canvas gerado ao ZIP
+                        return new Promise((resolve) => {
+                            canvas.toBlob(function (blob) {
+                                const filename = `image_${i + 1}.png`
+                                zip.file(filename, blob);
+                                    const images = qrCodeElemen.getElementsByTagName('img');
+                                    for (let i = 0; i < images.length; i++) {
+                                        const img = images[i];
+                                        img.remove();
+                                    }
+                                resolve(); // Resolve a promessa após terminar a operação com o blob
+                            });
+                        });
+                    });
+                }
+
+                // Gere o ZIP e faça o download
+                zip.generateAsync({ type: 'blob' })
+                    .then(function (content) {
+                        // Cria um link para fazer o download do ZIP
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(content);
+                        link.download = 'images.zip';
+                        link.click();
+                    })
+                    .catch(function (error) {
+                        console.error('Erro ao gerar o ZIP: ', error);
+                    });
+            }
+
+            async function makeCodePartitioned() {
+                const info =  document.getElementById("data");
+                const elText = document.getElementById("data");
+                const codeElemen = document.getElementById("code");
+                const qrCodeElemen = document.getElementById("qrcode");
+                const codesList = elText.value.split(";");
+                const zip = new JSZip();
+                
+                if (!elText.value) {
+                    alert("Input a text");
+                    elText.focus();
+                    return;
+                }
+            
+                const maxIterations = 200;
+                const numIterations = Math.ceil(codesList.length / maxIterations);
+                info.style.display = "block";
+            
+                for (let j = 0; j < numIterations; j++) {
+                    for (let i = j * maxIterations; i < Math.min((j + 1) * maxIterations, codesList.length); i++) {
+                        const c = codesList[i];
+                        const filename = codeFormat(c);
+            
+                        // Chame codeFormat antes de fazer o QRCode e desenhar no canvas
+                        codeElemen.innerHTML = filename;
+            
+                        // Crie o QRCode
+                        const qrcode = new QRCode(qrCodeElemen, {
+                            width: 450,
+                            height: 450,
+                        });
+                        qrcode.makeCode(c);
+            
+                        const htmlContent = document.getElementById('htmlContent');
+                        const canvas = document.getElementById('canvas');
+                        const context = canvas.getContext('2d');
+            
+                        const htmlContentWidth = htmlContent.offsetWidth;
+                        const htmlContentHeight = htmlContent.offsetHeight;
+            
+                        canvas.width = htmlContentWidth;
+                        canvas.height = htmlContentHeight;
+            
+                        // Limpa o canvas antes de desenhar
+                        context.clearRect(0, 0, canvas.width, canvas.height);
+            
+                        // Desenha o conteúdo HTML no canvas
+                        await html2canvas(htmlContent, { scale: 0.7 }).then(function (canvas) {
+                            // Adiciona o canvas gerado ao ZIP
+                            return new Promise((resolve) => {
+                                canvas.toBlob(function (blob) {
+                                    const filename = `image_${i + 1}.png`
+                                    zip.file(filename, blob);
+                                    const images = qrCodeElemen.getElementsByTagName('img');
+                                    info.innerHTML = `Convertendo ${i + 1} de ${codesList.length}`
+                                    for (let i = 0; i < images.length; i++) {
+                                        const img = images[i];
+                                        img.remove();
+                                    }
+                                    resolve(); // Resolve a promessa após terminar a operação com o blob
+                                });
+                            });
+                        });
+                    }
+            
+                    // Gere o ZIP e faça o download a cada 200 iterações
+                    if (j === numIterations - 1 || (j + 1) % 200 === 0) {
+                        zip.generateAsync({ type: 'blob' })
+                            .then(function (content) {
+                                // Cria um link para fazer o download do ZIP
+                                const link = document.createElement('a');
+                                link.href = URL.createObjectURL(content);
+                                link.download = `images_${j + 1}.zip`;
+                                link.click();
+                            })
+                            .catch(function (error) {
+                                console.error('Erro ao gerar o ZIP: ', error);
+                            });
+                    }
+                }
+            }
+            
+
+
+            function codeFormat(codeString) {
+                var separate = codeString.split(",")
+                var luc = separate[2].split('-')[1];
+                var ingresso = separate[0].split('-')[1];
+
+                return luc + "." + ingresso
+
+            }
+        </script>
+    </body>
+</html>
